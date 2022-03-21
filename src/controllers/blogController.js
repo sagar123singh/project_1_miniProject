@@ -237,50 +237,55 @@ const updateBlog = async function (req, res) {
     }
 }
 
-
 const deleteBlogByID = async function (req, res) {
     try {
-        
-        const blogId = req.params.blogId
-        
+        let id = req.params.blogId
+        let data = await blogModel.findById(id)
+        if (data) {
+            if (data.isDeleted == false) {
+                let Data2 = await blogModel.findOneAndUpdate({ _id: id }, { isDeleted: true, deleteAt: new Date() }, { new: true })
+                return res.status(200).send({ status: true, msg: "data deleted" })
 
-        await blogModel.findOneAndUpdate({ _id: blogId }, { $set: { isDeleted: true, deletedAt:  Date.now() } })
-        res.status(200).send({ status: true, message: "Blog deleted successfully" })
-    } catch (error) {
-        res.status(500).send({ status: false, message: error.message });
+            }
+            else {
+                return res.status(200).send({ msg: "data already deleted" })
+            }
+
+        } else {
+            return res.status(404).send({ msg: "id does not exist" })
+        }
+    }
+    catch (err) {
+        res.status(500).send({ status: false, msg: err.massage })
     }
 }
 
 const deleteBlogByParams = async function (req, res) {
+
     try {
-        //Delete blog documents by category, authorid, tag name, subcategory name, unpublished
-        let { blogId, authorId, category, tags, subcategory, isPublished } = req.query
-        if (!req.query) {
-            return res.status(400).send({ status: false, msg: "bad request" })
-        }
+        let data = req.query
+        if (Object.keys(data) == 0) return res.status(400).send({ status: false, msg: "not a vaild input" })
 
-        // let multipleDeletes = await BlogModel.find({ $and: [{ isDeleted: false},{ authorId: authorId }, { $or: [{ blogId: blogId }, { category: category }, { tags: tags }, { subcategory: subcategory }, { isPublished: isPublished }] }] })
-        let multipleDeletes = await blogModel.find({ $and: [{ isDeleted: false, authorId: authorId }, { $or: [{ authorId: authorId }, { blogId: blogId }, { category: category }, { tags: tags }, { subcategory: subcategory }, { isPublished: isPublished }] }] })
-       
-        if (multipleDeletes.length <= 0) {
-    return res.status(404).send({ status: false, msg: "data not found" })
-}
-// let date = moment().format("YYYY-MM-DD[T]HH:mm:ss")
+        let check = await blogModel.find(data)
+        if (!check) return res.status(404).send('Blog not exist')
+        console.log(check)
 
-//console.log(multipleDeletes)
-for (let i = 0; i < multipleDeletes.length; i++) {
-    let blogId = multipleDeletes[i]._id
+        // let checking = check.isPublished
+        // if(checking == false) {
 
-    const result = await blogModel.findByIdAndUpdate(blogId, { $set: { isDeleted: true, deletedAt: Date.now() } }, { new: true })
-    return res.status(200).send({status:true , blogdata:result })
+        const deleteBYquery = await blogModel.updateMany({ $and: [data, { isDeleted: false }, { isPublished: false }] }, { $set: { isDeleted: true, deleteAt: new Date() } })
+        if (deleteBYquery.modifiedCount == 0) return res.status(400).send('user already deleted')
 
-}
+        if (!deleteBYquery) return res.status(404).send({ status: false, msg: "blog not exist" })
+        res.status(200).send({ status: true, msg: deleteBYquery })
+    }
 
-} catch (error) {
-    res.status(500).send({ msg: "Error", error: error.message })
-}
+    catch (error) {
+        res.status(500).send({ status: false, msg: error.mess })
+    }
 }
 
+  
 
 module.exports.createBlog = createBlog;
 module.exports.listBlogs = listBlogs;

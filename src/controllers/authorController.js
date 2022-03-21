@@ -130,8 +130,8 @@ const loginAuthor = async function (req, res) {
     const token = jwt.sign(
       {
         authorId: author._id,
-        iat : Math.floor(Date.now() / 1000),
-        exp: Math.floor(Date.now() /1000) +10*60*60
+        iat : Math.floor(Date.now() / 1000),     //issued at
+        exp: Math.floor(Date.now() /1000) +10*60*60           
       }, 'hiimyprivatekeyisverysecuredbecauseitiscreatedbymesagarsolanki0123')
 
     res.setHeader("x-api-key", token);
