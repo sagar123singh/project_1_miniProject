@@ -8,7 +8,7 @@ const  middle1= async function (req, res, next){
    let token =req.headers["x-api-key"];
    if (!token){
          res.status(403).send({status:false, msg:"token not avilable(authentication)"})
-      reture;
+      return;
     }  
     console.log(token)
     
